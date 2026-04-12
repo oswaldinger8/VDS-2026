@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ipconfig)",
+      "Bash(node -e \"const r = require\\('./node_modules/next/package.json'\\); console.log\\(r.version\\)\")",
+      "Bash(curl -s \"http://localhost:3001/_next/static/chunks/_0--312w._.js\")"
+    ]
+  }
+}
