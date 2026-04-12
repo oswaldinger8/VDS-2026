@@ -18,7 +18,7 @@ export async function GET(
       };
 
       // Beim Verbinden sofort aktuellen Stand senden
-      supabaseServer
+      supabase
         .from("match_states")
         .select("*")
         .eq("tv_code", code)
@@ -28,7 +28,7 @@ export async function GET(
         });
 
       // Supabase Realtime auf dem Server abonnieren
-      const channel = supabaseServer
+      const channel = supabase
         .channel(`sse-${code}-${Date.now()}`)
         .on(
           "postgres_changes",
@@ -52,7 +52,7 @@ export async function GET(
       // Cleanup wenn TV-Browser trennt
       _req.signal.addEventListener("abort", () => {
         clearInterval(keepAlive);
-        supabaseServer.removeChannel(channel);
+        supabase.removeChannel(channel);
       });
     },
   });
