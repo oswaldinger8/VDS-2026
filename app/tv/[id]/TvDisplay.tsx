@@ -128,8 +128,8 @@ export default function TvDisplay({ code }: { code: string }) {
           backgroundImage: "url('/logo.png')",
           backgroundRepeat: "no-repeat",
           backgroundPosition: "center 45%",
-          backgroundSize: "90%",
-          opacity: 0.32,
+          backgroundSize: "110%",
+          opacity: 0.40,
           filter: "brightness(1.5) contrast(1.15)",
           pointerEvents: "none",
         }}
