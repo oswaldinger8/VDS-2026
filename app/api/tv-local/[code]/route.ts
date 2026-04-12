@@ -1,22 +1,13 @@
-import { getMatchByTvCode } from "@/lib/localStore";
+import { supabase } from "@/lib/supabase";
+import { NextRequest } from "next/server";
 
 export const dynamic = "force-dynamic";
 
-export function GET(
-  _req: Request,
-  { params }: { params: { code: string } }
+export async function GET(
+  _req: NextRequest,
+  { params }: { params: Promise<{ code: string }> }
 ) {
-  const state = getMatchByTvCode(params.code);
-  if (!state) {
-    return Response.json({ error: "not found" }, {
-      status: 404,
-      headers: { "Cache-Control": "no-store" },
-    });
-  }
-  return Response.json(state, {
-    headers: {
-      "Cache-Control": "no-store, no-cache, must-revalidate",
-      "Pragma": "no-cache",
-    },
-  });
+  const { code } = await params;
+
+  return new Response(JSON.stringify({ ok: true, code }));
 }
