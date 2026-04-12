@@ -1,4 +1,3 @@
-import { supabase } from "@/lib/supabase";
 import { NextRequest } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -9,5 +8,9 @@ export async function GET(
 ) {
   const { code } = await params;
 
-  return new Response(JSON.stringify({ ok: true, code }));
+  return new Response(JSON.stringify({ code }), {
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
 }
