@@ -9,6 +9,8 @@ type Snapshot = {
   score2: number;
   currentPlayer: number;
   throwsInRound: number;
+  player1Legs: number;
+  player2Legs: number;
 };
 
 export default function MatchPage() {
@@ -26,6 +28,7 @@ export default function MatchPage() {
   const [player2Name, setPlayer2Name] = useState("Spieler 2");
   const [player1Legs, setPlayer1Legs] = useState(0);
   const [player2Legs, setPlayer2Legs] = useState(0);
+  const [winner, setWinner] = useState<string | null>(null);
   const [tvCode] = useState(() => {
     const stored = localStorage.getItem(`tvCode_${id}`);
     if (stored) return stored;
@@ -82,7 +85,7 @@ export default function MatchPage() {
   ]);
 
   function saveSnapshot() {
-    setHistory((prev) => [...prev, { score1, score2, currentPlayer, throwsInRound }]);
+    setHistory((prev) => [...prev, { score1, score2, currentPlayer, throwsInRound, player1Legs, player2Legs }]);
   }
 
   function getPoints(basePoints: number) {
@@ -121,15 +124,25 @@ export default function MatchPage() {
       }
 
       if (currentPlayer === 1) {
-        setScore1(501);
-        setScore2(501);
-        setPlayer1Legs((prev) => prev + 1);
-        setCurrentPlayer(2);
+        const newLegs = player1Legs + 1;
+        setPlayer1Legs(newLegs);
+        if (newLegs >= 3) {
+          setWinner(player1Name);
+        } else {
+          setScore1(501);
+          setScore2(501);
+          setCurrentPlayer(2);
+        }
       } else {
-        setScore1(501);
-        setScore2(501);
-        setPlayer2Legs((prev) => prev + 1);
-        setCurrentPlayer(1);
+        const newLegs = player2Legs + 1;
+        setPlayer2Legs(newLegs);
+        if (newLegs >= 3) {
+          setWinner(player2Name);
+        } else {
+          setScore1(501);
+          setScore2(501);
+          setCurrentPlayer(1);
+        }
       }
 
       setThrowsInRound(0);
@@ -167,8 +180,36 @@ export default function MatchPage() {
     setScore2(last.score2);
     setCurrentPlayer(last.currentPlayer);
     setThrowsInRound(last.throwsInRound);
+    setPlayer1Legs(last.player1Legs);
+    setPlayer2Legs(last.player2Legs);
+    setWinner(null);
     setMultiplier(1);
     setHistory((prev) => prev.slice(0, -1));
+  }
+
+  if (winner) {
+    return (
+      <div className="relative min-h-screen bg-gray-900 overflow-hidden flex flex-col items-center justify-center text-white text-center">
+        <div
+          className="absolute inset-0 bg-center bg-no-repeat opacity-20 pointer-events-none"
+          style={{ backgroundImage: "url('/logo.png')", backgroundSize: "140%" }}
+        />
+        <div className="relative z-10 flex flex-col items-center gap-6">
+          <div className="text-3xl text-gray-300">Spielende</div>
+          <div className="text-7xl font-bold">{winner}</div>
+          <div className="text-2xl text-green-400">gewinnt das Match!</div>
+          <div className="mt-4 text-lg text-gray-400">
+            {player1Name}: {player1Legs} Legs &nbsp;·&nbsp; {player2Name}: {player2Legs} Legs
+          </div>
+          <button
+            onClick={() => router.back()}
+            className="mt-8 bg-white text-black px-8 py-3 rounded-xl text-lg font-semibold"
+          >
+            Zurück
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (

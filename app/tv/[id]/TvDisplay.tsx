@@ -57,6 +57,12 @@ export default function TvDisplay({ code }: { code: string }) {
 
   const p1Active = state?.current_player === "player1";
   const p2Active = state?.current_player === "player2";
+  const winner =
+    (state?.player1_legs ?? 0) >= 3
+      ? state?.player1_name
+      : (state?.player2_legs ?? 0) >= 3
+      ? state?.player2_name
+      : null;
 
   if (loading && !state) {
     return (
@@ -104,6 +110,49 @@ export default function TvDisplay({ code }: { code: string }) {
           </div>
           <div style={{ fontSize: "2rem", color: "#cfcfcf" }}>
             Warte auf Spielstart…
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (winner) {
+    return (
+      <div
+        style={{
+          minHeight: "100vh",
+          background: "#111",
+          color: "#f5f5f5",
+          fontFamily: "Arial, Helvetica, sans-serif",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          textAlign: "center",
+        }}
+      >
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            backgroundImage: "url('/logo.png')",
+            backgroundRepeat: "no-repeat",
+            backgroundPosition: "center",
+            backgroundSize: "90%",
+            opacity: 0.15,
+            pointerEvents: "none",
+          }}
+        />
+        <div style={{ position: "relative", zIndex: 1 }}>
+          <div style={{ fontSize: "3rem", color: "#aaa", marginBottom: "1rem" }}>Spielende</div>
+          <div style={{ fontSize: "10rem", fontWeight: 800, lineHeight: 1, color: "#4ade80" }}>
+            {winner}
+          </div>
+          <div style={{ fontSize: "3rem", marginTop: "1.5rem", color: "#4ade80" }}>
+            gewinnt das Match!
+          </div>
+          <div style={{ fontSize: "2rem", marginTop: "2rem", color: "#888" }}>
+            {state!.player1_name}: {state!.player1_legs ?? 0} Legs &nbsp;·&nbsp; {state!.player2_name}: {state!.player2_legs ?? 0} Legs
           </div>
         </div>
       </div>
