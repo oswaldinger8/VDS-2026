@@ -26,7 +26,7 @@ style={{ backgroundImage: "url('/logo.png')", backgroundSize: "120%" }}
         </button>
 
         <button
-          onClick={() => alert("Join-Seite kommt als Nächstes")}
+          onClick={() => router.push("/tv")}
           className="w-full bg-gray-200 py-3 rounded-xl hover:bg-gray-300 transition"
         >
           Turnier beitreten
