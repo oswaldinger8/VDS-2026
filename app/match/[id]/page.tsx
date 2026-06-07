@@ -30,37 +30,72 @@ export default function MatchPage() {
   const [player1Legs, setPlayer1Legs] = useState(0);
   const [player2Legs, setPlayer2Legs] = useState(0);
   const [winner, setWinner] = useState<string | null>(null);
-  const [tvCode] = useState(() => {
-    const stored = localStorage.getItem(`tvCode_${id}`);
-    if (stored) return stored;
-    const code = String(Math.floor(1000 + Math.random() * 9000));
-    localStorage.setItem(`tvCode_${id}`, code);
-    return code;
-  });
+  const [tvCode, setTvCode] = useState("");
 
   useEffect(() => {
     if (!id) return;
-    try {
-      const direct = localStorage.getItem(`matchPlayers_${id}`);
-      if (direct) {
-        const { player1, player2 } = JSON.parse(direct);
-        setPlayer1Name(player1);
-        setPlayer2Name(player2);
-      } else {
-        const draft = JSON.parse(localStorage.getItem("newTournamentDraft") ?? "{}");
-        const games = JSON.parse(localStorage.getItem(`games_${draft.tournamentCode}`) ?? "[]");
-        const game = games.find((g: { id: string; player1: string; player2: string }) => g.id === id);
-        if (game) {
-          setPlayer1Name(game.player1);
-          setPlayer2Name(game.player2);
+
+    async function init() {
+      let resolvedTvCode = localStorage.getItem(`tvCode_${id}`);
+      let resolvedPlayer1: string | null = null;
+      let resolvedPlayer2: string | null = null;
+
+      // Try localStorage for player names
+      try {
+        const direct = localStorage.getItem(`matchPlayers_${id}`);
+        if (direct) {
+          const parsed = JSON.parse(direct);
+          resolvedPlayer1 = parsed.player1;
+          resolvedPlayer2 = parsed.player2;
+        } else {
+          const draft = JSON.parse(localStorage.getItem("newTournamentDraft") ?? "{}");
+          const games = JSON.parse(localStorage.getItem(`games_${draft.tournamentCode}`) ?? "[]");
+          const game = games.find((g: { id: string; player1: string; player2: string }) => g.id === id);
+          if (game) {
+            resolvedPlayer1 = game.player1;
+            resolvedPlayer2 = game.player2;
+          }
         }
+      } catch {}
+
+      // Fall back to Supabase if TV code or names are still missing
+      if (!resolvedTvCode || !resolvedPlayer1) {
+        try {
+          const { data } = await supabase
+            .from("match_states")
+            .select("tv_code, player1_name, player2_name")
+            .eq("id", id)
+            .maybeSingle();
+          if (data) {
+            if (!resolvedTvCode && data.tv_code) {
+              resolvedTvCode = data.tv_code;
+              localStorage.setItem(`tvCode_${id}`, data.tv_code);
+            }
+            if (!resolvedPlayer1 && data.player1_name && data.player1_name !== "Spieler 1") {
+              resolvedPlayer1 = data.player1_name;
+              resolvedPlayer2 = data.player2_name;
+            }
+          }
+        } catch {}
       }
-    } catch {}
-    setNamesLoaded(true);
+
+      // Generate a new TV code only if nothing exists anywhere
+      if (!resolvedTvCode) {
+        resolvedTvCode = String(Math.floor(1000 + Math.random() * 9000));
+        localStorage.setItem(`tvCode_${id}`, resolvedTvCode);
+      }
+
+      setTvCode(resolvedTvCode);
+      if (resolvedPlayer1) setPlayer1Name(resolvedPlayer1);
+      if (resolvedPlayer2) setPlayer2Name(resolvedPlayer2 ?? "Spieler 2");
+      setNamesLoaded(true);
+    }
+
+    init();
   }, [id]);
 
   useEffect(() => {
-    if (!id || !namesLoaded) return;
+    if (!id || !namesLoaded || !tvCode) return;
 
     supabase
       .from("match_states")
