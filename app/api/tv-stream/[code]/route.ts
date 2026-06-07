@@ -1,12 +1,14 @@
 import { supabase } from "@/lib/supabase";
+import { NextRequest } from "next/server";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(
-  _req: Request,
+  _req: NextRequest,
   { params }: { params: Promise<{ code: string }> }
 ) {
   const { code } = await params;
+
   const encoder = new TextEncoder();
 
   const stream = new ReadableStream({
@@ -17,7 +19,6 @@ export async function GET(
         );
       };
 
-      // Beim Verbinden sofort aktuellen Stand senden
       supabase
         .from("match_states")
         .select("*")
@@ -27,7 +28,6 @@ export async function GET(
           if (data) send(data);
         });
 
-      // Supabase Realtime auf dem Server abonnieren
       const channel = supabase
         .channel(`sse-${code}-${Date.now()}`)
         .on(
@@ -44,12 +44,10 @@ export async function GET(
         )
         .subscribe();
 
-      // Keep-alive alle 20 Sekunden
       const keepAlive = setInterval(() => {
         controller.enqueue(encoder.encode(": ping\n\n"));
       }, 20000);
 
-      // Cleanup wenn TV-Browser trennt
       _req.signal.addEventListener("abort", () => {
         clearInterval(keepAlive);
         supabase.removeChannel(channel);
@@ -61,7 +59,7 @@ export async function GET(
     headers: {
       "Content-Type": "text/event-stream",
       "Cache-Control": "no-cache",
-      "Connection": "keep-alive",
+      Connection: "keep-alive",
     },
   });
 }

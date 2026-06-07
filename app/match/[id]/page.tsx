@@ -26,6 +26,7 @@ export default function MatchPage() {
   const [throwsInRound, setThrowsInRound] = useState(0);
   const [player1Name, setPlayer1Name] = useState("Spieler 1");
   const [player2Name, setPlayer2Name] = useState("Spieler 2");
+  const [namesLoaded, setNamesLoaded] = useState(false);
   const [player1Legs, setPlayer1Legs] = useState(0);
   const [player2Legs, setPlayer2Legs] = useState(0);
   const [winner, setWinner] = useState<string | null>(null);
@@ -40,18 +41,26 @@ export default function MatchPage() {
   useEffect(() => {
     if (!id) return;
     try {
-      const draft = JSON.parse(localStorage.getItem("newTournamentDraft") ?? "{}");
-      const games = JSON.parse(localStorage.getItem(`games_${draft.tournamentCode}`) ?? "[]");
-      const game = games.find((g: { id: string; player1: string; player2: string }) => g.id === id);
-      if (game) {
-        setPlayer1Name(game.player1);
-        setPlayer2Name(game.player2);
+      const direct = localStorage.getItem(`matchPlayers_${id}`);
+      if (direct) {
+        const { player1, player2 } = JSON.parse(direct);
+        setPlayer1Name(player1);
+        setPlayer2Name(player2);
+      } else {
+        const draft = JSON.parse(localStorage.getItem("newTournamentDraft") ?? "{}");
+        const games = JSON.parse(localStorage.getItem(`games_${draft.tournamentCode}`) ?? "[]");
+        const game = games.find((g: { id: string; player1: string; player2: string }) => g.id === id);
+        if (game) {
+          setPlayer1Name(game.player1);
+          setPlayer2Name(game.player2);
+        }
       }
     } catch {}
+    setNamesLoaded(true);
   }, [id]);
 
   useEffect(() => {
-    if (!id) return;
+    if (!id || !namesLoaded) return;
 
     supabase
       .from("match_states")
@@ -73,6 +82,7 @@ export default function MatchPage() {
       });
   }, [
     id,
+    namesLoaded,
     score1,
     score2,
     currentPlayer,

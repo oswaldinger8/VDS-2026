@@ -143,6 +143,7 @@ export default function AdminPage() {
     const updated = [...games, newGame];
     setGames(updated);
     localStorage.setItem(`games_${code}`, JSON.stringify(updated));
+    localStorage.setItem(`matchPlayers_${newGame.id}`, JSON.stringify({ player1, player2 }));
     setPlayer1("");
     setPlayer2("");
     setSelectedBoard("");
