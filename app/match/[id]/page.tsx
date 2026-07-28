@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
 type Snapshot = {
@@ -11,6 +11,7 @@ type Snapshot = {
   throwsInRound: number;
   player1Legs: number;
   player2Legs: number;
+  turnStartScore: number;
 };
 
 export default function MatchPage() {
@@ -31,12 +32,15 @@ export default function MatchPage() {
   const [player2Legs, setPlayer2Legs] = useState(0);
   const [winner, setWinner] = useState<string | null>(null);
   const [tvCode, setTvCode] = useState("");
+  const [turnStartScore, setTurnStartScore] = useState(501);
+  const [tournamentCode, setTournamentCode] = useState("");
 
   useEffect(() => {
     if (!id) return;
 
     async function init() {
       let resolvedTvCode = localStorage.getItem(`tvCode_${id}`);
+      let resolvedTournamentCode = localStorage.getItem(`tournamentCode_${id}`);
       let resolvedPlayer1: string | null = null;
       let resolvedPlayer2: string | null = null;
 
@@ -47,14 +51,18 @@ export default function MatchPage() {
           const parsed = JSON.parse(direct);
           resolvedPlayer1 = parsed.player1;
           resolvedPlayer2 = parsed.player2;
-        } else {
-          const draft = JSON.parse(localStorage.getItem("newTournamentDraft") ?? "{}");
-          const games = JSON.parse(localStorage.getItem(`games_${draft.tournamentCode}`) ?? "[]");
-          const game = games.find((g: { id: string; player1: string; player2: string }) => g.id === id);
-          if (game) {
-            resolvedPlayer1 = game.player1;
-            resolvedPlayer2 = game.player2;
-          }
+        }
+
+        const draft = JSON.parse(localStorage.getItem("newTournamentDraft") ?? "{}");
+        const games = JSON.parse(localStorage.getItem(`games_${draft.tournamentCode}`) ?? "[]");
+        const game = games.find((g: { id: string; player1: string; player2: string }) => g.id === id);
+
+        if (!resolvedTournamentCode && draft.tournamentCode && game) {
+          resolvedTournamentCode = draft.tournamentCode;
+        }
+        if (!direct && game) {
+          resolvedPlayer1 = game.player1;
+          resolvedPlayer2 = game.player2;
         }
       } catch {}
 
@@ -86,6 +94,7 @@ export default function MatchPage() {
       }
 
       setTvCode(resolvedTvCode);
+      if (resolvedTournamentCode) setTournamentCode(resolvedTournamentCode);
       if (resolvedPlayer1) setPlayer1Name(resolvedPlayer1);
       if (resolvedPlayer2) setPlayer2Name(resolvedPlayer2 ?? "Spieler 2");
       setNamesLoaded(true);
@@ -93,6 +102,31 @@ export default function MatchPage() {
 
     init();
   }, [id]);
+
+  const leaveMatch = useCallback(() => {
+    if (!confirm("Spiel verlassen und Scheibe freigeben?")) return;
+
+    if (tournamentCode) {
+      try {
+        const games = JSON.parse(localStorage.getItem(`games_${tournamentCode}`) ?? "[]");
+        const updated = games.map((g: { id: string; status: string }) =>
+          g.id === id ? { ...g, status: "finished" } : g
+        );
+        localStorage.setItem(`games_${tournamentCode}`, JSON.stringify(updated));
+      } catch {}
+      router.push(`/admin/${tournamentCode}`);
+    } else {
+      router.back();
+    }
+  }, [id, tournamentCode, router]);
+
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") leaveMatch();
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [leaveMatch]);
 
   useEffect(() => {
     if (!id || !namesLoaded || !tvCode) return;
@@ -130,7 +164,10 @@ export default function MatchPage() {
   ]);
 
   function saveSnapshot() {
-    setHistory((prev) => [...prev, { score1, score2, currentPlayer, throwsInRound, player1Legs, player2Legs }]);
+    setHistory((prev) => [
+      ...prev,
+      { score1, score2, currentPlayer, throwsInRound, player1Legs, player2Legs, turnStartScore },
+    ]);
   }
 
   function getPoints(basePoints: number) {
@@ -150,10 +187,18 @@ export default function MatchPage() {
     saveSnapshot();
 
     const activeScore = currentPlayer === 1 ? score1 : score2;
+    const startScore = throwsInRound === 0 ? activeScore : turnStartScore;
+    if (throwsInRound === 0) setTurnStartScore(activeScore);
+
     const nextScore = activeScore - points;
     const nextThrows = throwsInRound + 1;
 
     if (nextScore < 0 || nextScore === 1) {
+      if (currentPlayer === 1) {
+        setScore1(startScore);
+      } else {
+        setScore2(startScore);
+      }
       setThrowsInRound(0);
       setMultiplier(1);
       setCurrentPlayer((prev) => (prev === 1 ? 2 : 1));
@@ -162,6 +207,11 @@ export default function MatchPage() {
 
     if (nextScore === 0) {
       if (!isDouble(basePoints)) {
+        if (currentPlayer === 1) {
+          setScore1(startScore);
+        } else {
+          setScore2(startScore);
+        }
         setThrowsInRound(0);
         setMultiplier(1);
         setCurrentPlayer((prev) => (prev === 1 ? 2 : 1));
@@ -227,6 +277,7 @@ export default function MatchPage() {
     setThrowsInRound(last.throwsInRound);
     setPlayer1Legs(last.player1Legs);
     setPlayer2Legs(last.player2Legs);
+    setTurnStartScore(last.turnStartScore);
     setWinner(null);
     setMultiplier(1);
     setHistory((prev) => prev.slice(0, -1));

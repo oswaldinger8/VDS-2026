@@ -144,6 +144,7 @@ export default function AdminPage() {
     setGames(updated);
     localStorage.setItem(`games_${code}`, JSON.stringify(updated));
     localStorage.setItem(`matchPlayers_${newGame.id}`, JSON.stringify({ player1, player2 }));
+    localStorage.setItem(`tournamentCode_${newGame.id}`, code);
     setPlayer1("");
     setPlayer2("");
     setSelectedBoard("");
@@ -273,7 +274,7 @@ export default function AdminPage() {
           <h2 className="text-2xl font-semibold mb-6">Boards</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {Array.from({ length: Number(draft.boards) }).map((_, i) => {
-              const game = games.find((g) => g.board === i + 1);
+              const game = games.find((g) => g.board === i + 1 && g.status !== "finished");
               return (
                 <div key={i} className="border rounded-2xl p-5 text-center bg-gray-50">
                   <div className="text-lg font-semibold">Scheibe {i + 1}</div>
