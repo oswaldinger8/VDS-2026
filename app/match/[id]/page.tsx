@@ -34,6 +34,7 @@ export default function MatchPage() {
   const [tvCode, setTvCode] = useState("");
   const [turnStartScore, setTurnStartScore] = useState(501);
   const [tournamentCode, setTournamentCode] = useState("");
+  const [legsToWin, setLegsToWin] = useState(3);
 
   useEffect(() => {
     if (!id) return;
@@ -41,6 +42,7 @@ export default function MatchPage() {
     async function init() {
       let resolvedTvCode = localStorage.getItem(`tvCode_${id}`);
       let resolvedTournamentCode = localStorage.getItem(`tournamentCode_${id}`);
+      let resolvedBestOf = localStorage.getItem(`bestOf_${id}`);
       let resolvedPlayer1: string | null = null;
       let resolvedPlayer2: string | null = null;
 
@@ -59,6 +61,9 @@ export default function MatchPage() {
 
         if (!resolvedTournamentCode && draft.tournamentCode && game) {
           resolvedTournamentCode = draft.tournamentCode;
+        }
+        if (!resolvedBestOf && draft.bestOf && game) {
+          resolvedBestOf = draft.bestOf;
         }
         if (!direct && game) {
           resolvedPlayer1 = game.player1;
@@ -95,6 +100,7 @@ export default function MatchPage() {
 
       setTvCode(resolvedTvCode);
       if (resolvedTournamentCode) setTournamentCode(resolvedTournamentCode);
+      if (resolvedBestOf) setLegsToWin(Math.ceil(Number(resolvedBestOf) / 2));
       if (resolvedPlayer1) setPlayer1Name(resolvedPlayer1);
       if (resolvedPlayer2) setPlayer2Name(resolvedPlayer2 ?? "Spieler 2");
       setNamesLoaded(true);
@@ -221,7 +227,7 @@ export default function MatchPage() {
       if (currentPlayer === 1) {
         const newLegs = player1Legs + 1;
         setPlayer1Legs(newLegs);
-        if (newLegs >= 3) {
+        if (newLegs >= legsToWin) {
           setWinner(player1Name);
         } else {
           setScore1(501);
@@ -231,7 +237,7 @@ export default function MatchPage() {
       } else {
         const newLegs = player2Legs + 1;
         setPlayer2Legs(newLegs);
-        if (newLegs >= 3) {
+        if (newLegs >= legsToWin) {
           setWinner(player2Name);
         } else {
           setScore1(501);

@@ -130,7 +130,7 @@ export default function AdminPage() {
   }
 
   function createGame() {
-    if (!player1 || !player2 || !selectedBoard) return;
+    if (!player1 || !player2 || !selectedBoard || !draft) return;
     if (player1 === player2) { alert("Spieler dürfen nicht identisch sein"); return; }
 
     const board = Number(selectedBoard);
@@ -145,6 +145,7 @@ export default function AdminPage() {
     localStorage.setItem(`games_${code}`, JSON.stringify(updated));
     localStorage.setItem(`matchPlayers_${newGame.id}`, JSON.stringify({ player1, player2 }));
     localStorage.setItem(`tournamentCode_${newGame.id}`, code);
+    localStorage.setItem(`bestOf_${newGame.id}`, draft.bestOf);
     setPlayer1("");
     setPlayer2("");
     setSelectedBoard("");
