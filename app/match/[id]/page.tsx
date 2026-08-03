@@ -14,6 +14,7 @@ type Snapshot = {
   turnStartScore: number;
   lastTurnScore: number;
   lastTurnPlayer: number;
+  lastTurnBust: boolean;
 };
 
 export default function MatchPage() {
@@ -37,6 +38,7 @@ export default function MatchPage() {
   const [turnStartScore, setTurnStartScore] = useState(501);
   const [lastTurnScore, setLastTurnScore] = useState(0);
   const [lastTurnPlayer, setLastTurnPlayer] = useState(1);
+  const [lastTurnBust, setLastTurnBust] = useState(false);
   const [tournamentCode, setTournamentCode] = useState("");
   const [legsToWin, setLegsToWin] = useState(3);
 
@@ -44,6 +46,7 @@ export default function MatchPage() {
     throwsInRound === 0 ? lastTurnScore : turnStartScore - (currentPlayer === 1 ? score1 : score2);
   const turnScorePlayer = throwsInRound === 0 ? lastTurnPlayer : currentPlayer;
   const turnScorePlayerName = turnScorePlayer === 1 ? player1Name : player2Name;
+  const turnBust = throwsInRound === 0 && lastTurnBust;
 
   useEffect(() => {
     if (!id) return;
@@ -168,6 +171,7 @@ export default function MatchPage() {
         throws_in_round: throwsInRound,
         turn_score: turnScore,
         turn_score_player: turnScorePlayer === 1 ? "player1" : "player2",
+        turn_bust: turnBust,
         updated_at: new Date().toISOString(),
       })
       .then((result: { error: { message: string } | null }) => {
@@ -182,6 +186,7 @@ export default function MatchPage() {
     throwsInRound,
     turnScore,
     turnScorePlayer,
+    turnBust,
     player1Name,
     player2Name,
     player1Legs,
@@ -202,6 +207,7 @@ export default function MatchPage() {
         turnStartScore,
         lastTurnScore,
         lastTurnPlayer,
+        lastTurnBust,
       },
     ]);
   }
@@ -235,8 +241,9 @@ export default function MatchPage() {
       } else {
         setScore2(startScore);
       }
-      setLastTurnScore(0);
+      setLastTurnScore(startScore - nextScore);
       setLastTurnPlayer(currentPlayer);
+      setLastTurnBust(true);
       setThrowsInRound(0);
       setMultiplier(1);
       setCurrentPlayer((prev) => (prev === 1 ? 2 : 1));
@@ -250,8 +257,9 @@ export default function MatchPage() {
         } else {
           setScore2(startScore);
         }
-        setLastTurnScore(0);
+        setLastTurnScore(startScore);
         setLastTurnPlayer(currentPlayer);
+        setLastTurnBust(true);
         setThrowsInRound(0);
         setMultiplier(1);
         setCurrentPlayer((prev) => (prev === 1 ? 2 : 1));
@@ -260,6 +268,7 @@ export default function MatchPage() {
 
       setLastTurnScore(startScore);
       setLastTurnPlayer(currentPlayer);
+      setLastTurnBust(false);
 
       if (currentPlayer === 1) {
         const newLegs = player1Legs + 1;
@@ -299,6 +308,7 @@ export default function MatchPage() {
     if (nextThrows >= 3) {
       setLastTurnScore(startScore - nextScore);
       setLastTurnPlayer(currentPlayer);
+      setLastTurnBust(false);
       setThrowsInRound(0);
       setCurrentPlayer((prev) => (prev === 1 ? 2 : 1));
     } else {
@@ -309,6 +319,7 @@ export default function MatchPage() {
   function switchPlayer() {
     saveSnapshot();
     setLastTurnScore(turnStartScore - (currentPlayer === 1 ? score1 : score2));
+    setLastTurnBust(false);
     setLastTurnPlayer(currentPlayer);
     setThrowsInRound(0);
     setMultiplier(1);
@@ -327,6 +338,7 @@ export default function MatchPage() {
     setTurnStartScore(last.turnStartScore);
     setLastTurnScore(last.lastTurnScore);
     setLastTurnPlayer(last.lastTurnPlayer);
+    setLastTurnBust(last.lastTurnBust);
     setWinner(null);
     setMultiplier(1);
     setHistory((prev) => prev.slice(0, -1));
@@ -402,6 +414,7 @@ export default function MatchPage() {
           <span className="ml-3 text-sm text-gray-500">Würfe: {throwsInRound} / 3</span>
           <span className="ml-3 text-sm text-gray-500">
             Geworfen ({turnScorePlayerName}): {turnScore}
+            {turnBust ? " (Bust)" : ""}
           </span>
         </div>
 

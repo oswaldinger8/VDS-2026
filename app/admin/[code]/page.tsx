@@ -171,6 +171,7 @@ export default function AdminPage() {
         current_player: "player1",
         throws_in_round: 0,
         turn_score: 0,
+        turn_bust: false,
         updated_at: new Date().toISOString(),
       })
       .then((result: { error: { message: string } | null }) => {

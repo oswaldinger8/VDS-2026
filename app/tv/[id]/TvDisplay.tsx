@@ -345,6 +345,7 @@ export default function TvDisplay({ code }: { code: string }) {
           </strong>
           &nbsp;·&nbsp;Wurf {state.throws_in_round + 1} / 3
           &nbsp;·&nbsp;Geworfen ({turnScorePlayerName}): {state.turn_score ?? 0}
+          {state.turn_bust ? " (Bust)" : ""}
         </div>
       </div>
     </div>
