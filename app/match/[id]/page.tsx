@@ -13,6 +13,7 @@ type Snapshot = {
   player2Legs: number;
   turnStartScore: number;
   lastTurnScore: number;
+  lastTurnPlayer: number;
 };
 
 export default function MatchPage() {
@@ -35,11 +36,14 @@ export default function MatchPage() {
   const [tvCode, setTvCode] = useState("");
   const [turnStartScore, setTurnStartScore] = useState(501);
   const [lastTurnScore, setLastTurnScore] = useState(0);
+  const [lastTurnPlayer, setLastTurnPlayer] = useState(1);
   const [tournamentCode, setTournamentCode] = useState("");
   const [legsToWin, setLegsToWin] = useState(3);
 
   const turnScore =
     throwsInRound === 0 ? lastTurnScore : turnStartScore - (currentPlayer === 1 ? score1 : score2);
+  const turnScorePlayer = throwsInRound === 0 ? lastTurnPlayer : currentPlayer;
+  const turnScorePlayerName = turnScorePlayer === 1 ? player1Name : player2Name;
 
   useEffect(() => {
     if (!id) return;
@@ -76,12 +80,13 @@ export default function MatchPage() {
         }
       } catch {}
 
-      // Fall back to Supabase if TV code or names are still missing
-      if (!resolvedTvCode || !resolvedPlayer1) {
+      // Fall back to Supabase if TV code, names, tournament code or best-of are still missing
+      // (e.g. this match was opened on a different device than the one it was created on)
+      if (!resolvedTvCode || !resolvedPlayer1 || !resolvedTournamentCode || !resolvedBestOf) {
         try {
           const { data } = await supabase
             .from("match_states")
-            .select("tv_code, player1_name, player2_name")
+            .select("tv_code, player1_name, player2_name, tournament_code, best_of")
             .eq("id", id)
             .maybeSingle();
           if (data) {
@@ -92,6 +97,12 @@ export default function MatchPage() {
             if (!resolvedPlayer1 && data.player1_name && data.player1_name !== "Spieler 1") {
               resolvedPlayer1 = data.player1_name;
               resolvedPlayer2 = data.player2_name;
+            }
+            if (!resolvedTournamentCode && data.tournament_code) {
+              resolvedTournamentCode = data.tournament_code;
+            }
+            if (!resolvedBestOf && data.best_of) {
+              resolvedBestOf = String(data.best_of);
             }
           }
         } catch {}
@@ -156,6 +167,7 @@ export default function MatchPage() {
         current_player: currentPlayer === 1 ? "player1" : "player2",
         throws_in_round: throwsInRound,
         turn_score: turnScore,
+        turn_score_player: turnScorePlayer === 1 ? "player1" : "player2",
         updated_at: new Date().toISOString(),
       })
       .then((result: { error: { message: string } | null }) => {
@@ -169,6 +181,7 @@ export default function MatchPage() {
     currentPlayer,
     throwsInRound,
     turnScore,
+    turnScorePlayer,
     player1Name,
     player2Name,
     player1Legs,
@@ -188,6 +201,7 @@ export default function MatchPage() {
         player2Legs,
         turnStartScore,
         lastTurnScore,
+        lastTurnPlayer,
       },
     ]);
   }
@@ -222,6 +236,7 @@ export default function MatchPage() {
         setScore2(startScore);
       }
       setLastTurnScore(0);
+      setLastTurnPlayer(currentPlayer);
       setThrowsInRound(0);
       setMultiplier(1);
       setCurrentPlayer((prev) => (prev === 1 ? 2 : 1));
@@ -236,6 +251,7 @@ export default function MatchPage() {
           setScore2(startScore);
         }
         setLastTurnScore(0);
+        setLastTurnPlayer(currentPlayer);
         setThrowsInRound(0);
         setMultiplier(1);
         setCurrentPlayer((prev) => (prev === 1 ? 2 : 1));
@@ -243,6 +259,7 @@ export default function MatchPage() {
       }
 
       setLastTurnScore(startScore);
+      setLastTurnPlayer(currentPlayer);
 
       if (currentPlayer === 1) {
         const newLegs = player1Legs + 1;
@@ -281,6 +298,7 @@ export default function MatchPage() {
 
     if (nextThrows >= 3) {
       setLastTurnScore(startScore - nextScore);
+      setLastTurnPlayer(currentPlayer);
       setThrowsInRound(0);
       setCurrentPlayer((prev) => (prev === 1 ? 2 : 1));
     } else {
@@ -291,6 +309,7 @@ export default function MatchPage() {
   function switchPlayer() {
     saveSnapshot();
     setLastTurnScore(turnStartScore - (currentPlayer === 1 ? score1 : score2));
+    setLastTurnPlayer(currentPlayer);
     setThrowsInRound(0);
     setMultiplier(1);
     setCurrentPlayer((prev) => (prev === 1 ? 2 : 1));
@@ -307,6 +326,7 @@ export default function MatchPage() {
     setPlayer2Legs(last.player2Legs);
     setTurnStartScore(last.turnStartScore);
     setLastTurnScore(last.lastTurnScore);
+    setLastTurnPlayer(last.lastTurnPlayer);
     setWinner(null);
     setMultiplier(1);
     setHistory((prev) => prev.slice(0, -1));
@@ -379,7 +399,9 @@ export default function MatchPage() {
         <div className="text-center mb-3 text-lg">
           Aktiver Spieler: <b>{currentPlayer === 1 ? player1Name : player2Name}</b>
           <span className="ml-3 text-sm text-gray-500">Würfe: {throwsInRound} / 3</span>
-          <span className="ml-3 text-sm text-gray-500">Geworfen: {turnScore}</span>
+          <span className="ml-3 text-sm text-gray-500">
+            Geworfen ({turnScorePlayerName}): {turnScore}
+          </span>
         </div>
 
         <div className="grid grid-cols-3 gap-3 mb-3">

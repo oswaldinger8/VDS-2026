@@ -57,6 +57,11 @@ export default function TvDisplay({ code }: { code: string }) {
 
   const p1Active = state?.current_player === "player1";
   const p2Active = state?.current_player === "player2";
+  const turnScorePlayerName = state
+    ? (state.turn_score_player ?? state.current_player) === "player2"
+      ? state.player2_name
+      : state.player1_name
+    : "";
   const winner =
     (state?.player1_legs ?? 0) >= 3
       ? state?.player1_name
@@ -335,7 +340,7 @@ export default function TvDisplay({ code }: { code: string }) {
             {p1Active ? state.player1_name : state.player2_name}
           </strong>
           &nbsp;·&nbsp;Wurf {state.throws_in_round + 1} / 3
-          &nbsp;·&nbsp;Geworfen: {state.turn_score ?? 0}
+          &nbsp;·&nbsp;Geworfen ({turnScorePlayerName}): {state.turn_score ?? 0}
         </div>
       </div>
     </div>

@@ -24,6 +24,10 @@ function makeId() {
   return Math.random().toString(36).slice(2, 10);
 }
 
+function makeTvCode() {
+  return String(Math.floor(1000 + Math.random() * 9000));
+}
+
 export default function AdminPage() {
   const params = useParams();
   const code = params.code as string;
@@ -140,12 +144,39 @@ export default function AdminPage() {
     }
 
     const newGame: Game = { id: makeId(), player1, player2, board, status: "waiting" };
+    const tvCode = makeTvCode();
     const updated = [...games, newGame];
     setGames(updated);
     localStorage.setItem(`games_${code}`, JSON.stringify(updated));
     localStorage.setItem(`matchPlayers_${newGame.id}`, JSON.stringify({ player1, player2 }));
     localStorage.setItem(`tournamentCode_${newGame.id}`, code);
     localStorage.setItem(`bestOf_${newGame.id}`, draft.bestOf);
+    localStorage.setItem(`tvCode_${newGame.id}`, tvCode);
+
+    // In Supabase anlegen, damit ein anderes Gerät (z. B. direkt an der Scheibe)
+    // das Match unabhängig vom lokalen Speicher dieses Browsers laden kann.
+    supabase
+      .from("match_states")
+      .upsert({
+        id: newGame.id,
+        tv_code: tvCode,
+        tournament_code: code,
+        best_of: Number(draft.bestOf),
+        player1_name: player1,
+        player2_name: player2,
+        player1_score: 501,
+        player2_score: 501,
+        player1_legs: 0,
+        player2_legs: 0,
+        current_player: "player1",
+        throws_in_round: 0,
+        turn_score: 0,
+        updated_at: new Date().toISOString(),
+      })
+      .then((result: { error: { message: string } | null }) => {
+        if (result.error) console.error("Supabase Spielanlage:", result.error.message);
+      });
+
     setPlayer1("");
     setPlayer2("");
     setSelectedBoard("");

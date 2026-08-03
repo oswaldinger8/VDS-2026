@@ -24,4 +24,7 @@ export type MatchState = {
   current_player: "player1" | "player2";
   throws_in_round: number;
   turn_score?: number;
+  turn_score_player?: "player1" | "player2";
+  tournament_code?: string;
+  best_of?: number;
 };
