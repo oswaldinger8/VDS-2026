@@ -62,10 +62,11 @@ export default function TvDisplay({ code }: { code: string }) {
       ? state.player2_name
       : state.player1_name
     : "";
+  const legsToWin = Math.ceil((state?.best_of ?? 5) / 2);
   const winner =
-    (state?.player1_legs ?? 0) >= 3
+    (state?.player1_legs ?? 0) >= legsToWin
       ? state?.player1_name
-      : (state?.player2_legs ?? 0) >= 3
+      : (state?.player2_legs ?? 0) >= legsToWin
       ? state?.player2_name
       : null;
 
@@ -158,6 +159,9 @@ export default function TvDisplay({ code }: { code: string }) {
           </div>
           <div style={{ fontSize: "2rem", marginTop: "2rem", color: "#888" }}>
             {state!.player1_name}: {state!.player1_legs ?? 0} Legs &nbsp;·&nbsp; {state!.player2_name}: {state!.player2_legs ?? 0} Legs
+          </div>
+          <div style={{ fontSize: "1.5rem", marginTop: "1rem", color: "#888" }}>
+            Checkout: {state!.turn_score ?? 0}
           </div>
         </div>
       </div>

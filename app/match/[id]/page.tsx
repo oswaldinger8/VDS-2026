@@ -346,6 +346,7 @@ export default function MatchPage() {
           <div className="mt-4 text-lg text-gray-400">
             {player1Name}: {player1Legs} Legs &nbsp;·&nbsp; {player2Name}: {player2Legs} Legs
           </div>
+          <div className="text-lg text-gray-400">Checkout: {lastTurnScore}</div>
           <button
             onClick={() => router.back()}
             className="mt-8 bg-white text-black px-8 py-3 rounded-xl text-lg font-semibold"
