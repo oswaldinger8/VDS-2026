@@ -335,6 +335,7 @@ export default function TvDisplay({ code }: { code: string }) {
             {p1Active ? state.player1_name : state.player2_name}
           </strong>
           &nbsp;·&nbsp;Wurf {state.throws_in_round + 1} / 3
+          &nbsp;·&nbsp;Geworfen: {state.turn_score ?? 0}
         </div>
       </div>
     </div>

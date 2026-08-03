@@ -36,6 +36,9 @@ export default function MatchPage() {
   const [tournamentCode, setTournamentCode] = useState("");
   const [legsToWin, setLegsToWin] = useState(3);
 
+  const turnScore =
+    throwsInRound === 0 ? 0 : turnStartScore - (currentPlayer === 1 ? score1 : score2);
+
   useEffect(() => {
     if (!id) return;
 
@@ -150,6 +153,7 @@ export default function MatchPage() {
         player2_legs: player2Legs,
         current_player: currentPlayer === 1 ? "player1" : "player2",
         throws_in_round: throwsInRound,
+        turn_score: turnScore,
         updated_at: new Date().toISOString(),
       })
       .then((result: { error: { message: string } | null }) => {
@@ -162,6 +166,7 @@ export default function MatchPage() {
     score2,
     currentPlayer,
     throwsInRound,
+    turnScore,
     player1Name,
     player2Name,
     player1Legs,
@@ -356,6 +361,7 @@ export default function MatchPage() {
         <div className="text-center mb-3 text-lg">
           Aktiver Spieler: <b>{currentPlayer === 1 ? player1Name : player2Name}</b>
           <span className="ml-3 text-sm text-gray-500">Würfe: {throwsInRound} / 3</span>
+          <span className="ml-3 text-sm text-gray-500">Geworfen: {turnScore}</span>
         </div>
 
         <div className="grid grid-cols-3 gap-3 mb-3">

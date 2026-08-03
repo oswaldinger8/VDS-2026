@@ -23,4 +23,5 @@ export type MatchState = {
   player2_legs?: number;
   current_player: "player1" | "player2";
   throws_in_round: number;
+  turn_score?: number;
 };
