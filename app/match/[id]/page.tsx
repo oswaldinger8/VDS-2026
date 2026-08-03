@@ -12,6 +12,7 @@ type Snapshot = {
   player1Legs: number;
   player2Legs: number;
   turnStartScore: number;
+  lastTurnScore: number;
 };
 
 export default function MatchPage() {
@@ -33,11 +34,12 @@ export default function MatchPage() {
   const [winner, setWinner] = useState<string | null>(null);
   const [tvCode, setTvCode] = useState("");
   const [turnStartScore, setTurnStartScore] = useState(501);
+  const [lastTurnScore, setLastTurnScore] = useState(0);
   const [tournamentCode, setTournamentCode] = useState("");
   const [legsToWin, setLegsToWin] = useState(3);
 
   const turnScore =
-    throwsInRound === 0 ? 0 : turnStartScore - (currentPlayer === 1 ? score1 : score2);
+    throwsInRound === 0 ? lastTurnScore : turnStartScore - (currentPlayer === 1 ? score1 : score2);
 
   useEffect(() => {
     if (!id) return;
@@ -177,7 +179,16 @@ export default function MatchPage() {
   function saveSnapshot() {
     setHistory((prev) => [
       ...prev,
-      { score1, score2, currentPlayer, throwsInRound, player1Legs, player2Legs, turnStartScore },
+      {
+        score1,
+        score2,
+        currentPlayer,
+        throwsInRound,
+        player1Legs,
+        player2Legs,
+        turnStartScore,
+        lastTurnScore,
+      },
     ]);
   }
 
@@ -210,6 +221,7 @@ export default function MatchPage() {
       } else {
         setScore2(startScore);
       }
+      setLastTurnScore(0);
       setThrowsInRound(0);
       setMultiplier(1);
       setCurrentPlayer((prev) => (prev === 1 ? 2 : 1));
@@ -223,11 +235,14 @@ export default function MatchPage() {
         } else {
           setScore2(startScore);
         }
+        setLastTurnScore(0);
         setThrowsInRound(0);
         setMultiplier(1);
         setCurrentPlayer((prev) => (prev === 1 ? 2 : 1));
         return;
       }
+
+      setLastTurnScore(startScore);
 
       if (currentPlayer === 1) {
         const newLegs = player1Legs + 1;
@@ -265,6 +280,7 @@ export default function MatchPage() {
     setMultiplier(1);
 
     if (nextThrows >= 3) {
+      setLastTurnScore(startScore - nextScore);
       setThrowsInRound(0);
       setCurrentPlayer((prev) => (prev === 1 ? 2 : 1));
     } else {
@@ -274,6 +290,7 @@ export default function MatchPage() {
 
   function switchPlayer() {
     saveSnapshot();
+    setLastTurnScore(turnStartScore - (currentPlayer === 1 ? score1 : score2));
     setThrowsInRound(0);
     setMultiplier(1);
     setCurrentPlayer((prev) => (prev === 1 ? 2 : 1));
@@ -289,6 +306,7 @@ export default function MatchPage() {
     setPlayer1Legs(last.player1Legs);
     setPlayer2Legs(last.player2Legs);
     setTurnStartScore(last.turnStartScore);
+    setLastTurnScore(last.lastTurnScore);
     setWinner(null);
     setMultiplier(1);
     setHistory((prev) => prev.slice(0, -1));
